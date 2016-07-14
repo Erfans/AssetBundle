@@ -1,0 +1,158 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Erfan
+ * Date: 7/3/2016
+ * Time: 16:53
+ */
+
+namespace Erfans\AssetBundle\Agents\Bower;
+
+use Bowerphp\Bowerphp;
+use Bowerphp\Installer\Installer;
+use Bowerphp\Output\BowerphpConsoleOutput;
+use Bowerphp\Package\Package;
+use Bowerphp\Repository\GithubRepository;
+use Bowerphp\Util\ZipArchive;
+use Erfans\AssetBundle\Agents\BaseAgent;
+use Erfans\AssetBundle\Agents\DownloadAgentInterface;
+use Github\Client;
+use Bowerphp\Config\Config;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Console\Output\OutputInterface;
+use Bowerphp\Util\Filesystem as BowerPhpFileSystem;
+
+class BowerAgent extends BaseAgent implements DownloadAgentInterface
+{
+
+    /** @var array $configKeysMap keys map to convert Yaml keys to bowers */
+    protected $configKeysMap = [
+        "bower_config" => [
+            "shorthand_resolver" => "shorthand-resolver",
+            "https_proxy" => "https-proxy",
+            "user_agent" => "user-agent",
+            "strict_ssl" => "strict-ssl",
+            "shallow_clone_hosts" => "shallowCloneHosts",
+            "ignored_dependencies" => "ignoredDependencies",
+        ],
+        "package_config" => [
+            "module_type" => "moduleType",
+            "dev_dependencies" => "devDependencies",
+        ],
+    ];
+
+    /** @var array $environmentConfig */
+    private $environmentConfig;
+
+    /** @var array $config */
+    private $config;
+
+    /** @var string $rootDirectory */
+    private $rootDirectory;
+
+    /** @var string $cachePath */
+    private $cachePath;
+
+    /** @var  Filesystem $fileSystem */
+    private $fileSystem;
+
+    /** @var string $downloadPath */
+    private $downloadPath;
+
+    /**
+     * Agent constructor.
+     *
+     * @param String $rootDirectory
+     * @param array $config
+     */
+    public function __construct($rootDirectory, array $config)
+    {
+        $config = $this->normalizeConfig($config, $this->configKeysMap);
+
+        $this->config = $config["package"];
+        $this->environmentConfig = $config["bower"];
+        $this->cachePath = $config["cache_path"];
+        $this->downloadPath = $config["directory"];
+
+        $this->rootDirectory = $rootDirectory;
+
+        $this->fileSystem = new Filesystem();
+    }
+
+    /**
+     * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
+     */
+    public function download(array $assetConfigs, InputInterface $input, OutputInterface $output)
+    {
+        // base folder will generate based on current environment
+        $this->mkdir($this->cachePath, null, $output);
+
+        // create bower.json file
+        // add dependencies of bundles to copy of main config
+        $config = $this->config;
+        foreach ($assetConfigs as $assetConfig) {
+            $config["dependencies"][$assetConfig->getId()] = $assetConfig->getVersion();
+        }
+
+        $this->dumpFile($this->cachePath."/bower.json", $this->convertArrayToJsonObject($config), null, $output);
+
+        // create .bowerrc file
+        $envConfig = $this->environmentConfig;
+        // fix relative path to web directory
+        $fileSystem = new Filesystem();
+        $endPath = $this->rootDirectory."/../".$this->downloadPath;
+        $envConfig["directory"] = $fileSystem->makePathRelative($endPath, $this->cachePath);
+        $this->dumpFile($this->cachePath."/.bowerrc", $this->convertArrayToJsonObject($envConfig), null, $output);
+
+        // Bowerphp install command
+        $oldWorkingDir = getcwd();
+        chdir($this->cachePath);
+
+        $bowerFileSystem = new BowerPhpFileSystem();
+        $bowerConfig = new Config($bowerFileSystem);
+        $githubClient = new Client();
+
+        $installer = new Installer($bowerFileSystem, new ZipArchive(), $bowerConfig);
+        $bowerOutput = new BowerphpConsoleOutput($output);
+
+        $bowerphp = new Bowerphp($bowerConfig, $bowerFileSystem, $githubClient, new GithubRepository(), $bowerOutput);
+
+        try {
+            $bowerphp->installDependencies($installer);
+        } catch (\RuntimeException $e) {
+            $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+            if ($e->getCode() == GithubRepository::VERSION_NOT_FOUND && !empty($package)) {
+                $output->writeln(
+                    sprintf('Available versions: %s', implode(', ', $bowerphp->getPackageInfo($package, 'versions')))
+                );
+            }
+        }
+
+        foreach ($assetConfigs as $assetConfig) {
+            $package = new Package($assetConfig->getId());
+            $bowerInfo = $bowerConfig->getPackageBowerFileContent($package);
+            if ($bowerInfo == null) {
+                throw new \RuntimeException("Can not find .bower file for package ".$assetConfig->getId());
+            }
+            if (array_key_exists("version", $bowerInfo)) {
+                $assetConfig->setInstalledVersion($bowerInfo["version"]);
+            }
+
+            if ($assetConfig->getMainFiles() == null && array_key_exists("main", $bowerInfo)) {
+                $assetConfig->setMainFiles(
+                    is_array($bowerInfo["main"]) ?
+                        $bowerInfo["main"] :
+                        [$bowerInfo["main"]]
+                );
+            }
+        }
+
+        chdir($oldWorkingDir);
+
+        return $assetConfigs;
+    }
+}

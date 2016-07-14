@@ -1,0 +1,22 @@
+services:
+
+    erfans_asset.config:
+        class: Erfans\AssetBundle\Asset\Config
+
+    erfans_asset.asset_manager:
+        class: Erfans\AssetBundle\Asset\AssetManager
+        arguments:
+          - "@service_container"
+          - "@erfans_asset.config"
+
+    erfans_asset.agents.bower:
+        class: Erfans\AssetBundle\Agents\Bower\BowerAgent
+        arguments:
+          - "%kernel.root_dir%"
+        tags:
+          - {name: erfans_asset.agent, alias: bower}
+
+    erfans_asset.agents.null:
+        class: Erfans\AssetBundle\Agents\Null\NullAgent
+        tags:
+          - {name: erfans_asset.agent, alias: null}
