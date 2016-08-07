@@ -218,7 +218,7 @@ erfans_asset:
                 ignored_dependencies:  []
 ```        
 
-It is long configuration to customize bower agent however usual configuration is:
+It is long configuration to customize bower agent, however, usual necessary configuration is:
 ```Yaml
 #app\config\config.yml
 erfans_asset:
@@ -229,6 +229,8 @@ erfans_asset:
             directory: "web/target-folder"
             github_token: github_token_to_extend_limitation
 ```
+
+Note that if you use Symfony2 you need to change cash directory in configuration.
 
 Step 3: Add bundle asset config file
 ---------------------
