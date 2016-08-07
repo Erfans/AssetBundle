@@ -43,38 +43,4 @@ class Config
     {
         return $this->config["bundles"];
     }
-
-    /**
-     * get names of registered agents
-     *
-     * @return array
-     */
-    public function getAgents()
-    {
-        return array_merge($this->getDownloadAgent(), $this->getOptimizeAgent(), $this->getReferenceAgent());
-    }
-
-    /**
-     * @return array
-     */
-    public function getDownloadAgent()
-    {
-        return $this->config["download"];
-    }
-
-    /**
-     * @return array
-     */
-    public function getReferenceAgent()
-    {
-        return $this->config["reference"];
-    }
-
-    /**
-     * @return array
-     */
-    public function getOptimizeAgent()
-    {
-        return $this->config["optimize"];
-    }
 }

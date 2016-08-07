@@ -44,7 +44,6 @@ abstract class BaseAgent
         return $config;
     }
 
-
     /**
      * dump files with output notification and error handling
      *

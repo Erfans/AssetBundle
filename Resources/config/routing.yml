@@ -1,3 +1,0 @@
-erfans_asset_homepage:
-    path:     /
-    defaults: { _controller: ErfansAssetBundle:Default:index }

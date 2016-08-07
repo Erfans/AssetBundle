@@ -1,7 +1,7 @@
 {
   "name": "erfans/asset-bundle",
   "description": "A Symfony bundle to manage assets.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "symfony-bundle",
   "keywords": [
     "erfans",

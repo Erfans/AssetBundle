@@ -15,7 +15,7 @@ use Bowerphp\Package\Package;
 use Bowerphp\Repository\GithubRepository;
 use Bowerphp\Util\ZipArchive;
 use Erfans\AssetBundle\Agents\BaseAgent;
-use Erfans\AssetBundle\Agents\DownloadAgentInterface;
+use Erfans\AssetBundle\Agents\InstallerInterface;
 use Github\Client;
 use Bowerphp\Config\Config;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,7 +23,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Console\Output\OutputInterface;
 use Bowerphp\Util\Filesystem as BowerPhpFileSystem;
 
-class BowerAgent extends BaseAgent implements DownloadAgentInterface
+class BowerAgent extends BaseAgent implements InstallerInterface
 {
 
     /** @var array $configKeysMap keys map to convert Yaml keys to bowers */
@@ -60,6 +60,9 @@ class BowerAgent extends BaseAgent implements DownloadAgentInterface
     /** @var string $downloadPath */
     private $downloadPath;
 
+    /** @var  string $githubToken */
+    private $githubToken;
+
     /**
      * Agent constructor.
      *
@@ -74,6 +77,7 @@ class BowerAgent extends BaseAgent implements DownloadAgentInterface
         $this->environmentConfig = $config["bower"];
         $this->cachePath = $config["cache_path"];
         $this->downloadPath = $config["directory"];
+        $this->githubToken = $config["github_token"];
 
         $this->rootDirectory = $rootDirectory;
 
@@ -86,7 +90,7 @@ class BowerAgent extends BaseAgent implements DownloadAgentInterface
      * @param OutputInterface $output
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
      */
-    public function download(array $assetConfigs, InputInterface $input, OutputInterface $output)
+    public function install(array $assetConfigs, InputInterface $input, OutputInterface $output)
     {
         // base folder will generate based on current environment
         $this->mkdir($this->cachePath, null, $output);
@@ -116,28 +120,30 @@ class BowerAgent extends BaseAgent implements DownloadAgentInterface
         $bowerConfig = new Config($bowerFileSystem);
         $githubClient = new Client();
 
+        if (!empty($this->githubToken)) {
+            $githubClient->authenticate($this->githubToken, null, Client::AUTH_HTTP_TOKEN);
+        }
+
         $installer = new Installer($bowerFileSystem, new ZipArchive(), $bowerConfig);
         $bowerOutput = new BowerphpConsoleOutput($output);
 
         $bowerphp = new Bowerphp($bowerConfig, $bowerFileSystem, $githubClient, new GithubRepository(), $bowerOutput);
 
-        try {
-            $bowerphp->installDependencies($installer);
-        } catch (\RuntimeException $e) {
-            $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
-            if ($e->getCode() == GithubRepository::VERSION_NOT_FOUND && !empty($package)) {
-                $output->writeln(
-                    sprintf('Available versions: %s', implode(', ', $bowerphp->getPackageInfo($package, 'versions')))
-                );
-            }
-        }
+        $bowerphp->installDependencies($installer);
 
         foreach ($assetConfigs as $assetConfig) {
             $package = new Package($assetConfig->getId());
-            $bowerInfo = $bowerConfig->getPackageBowerFileContent($package);
-            if ($bowerInfo == null) {
-                throw new \RuntimeException("Can not find .bower file for package ".$assetConfig->getId());
+
+            $directory = $bowerConfig->getInstallDir().'/'.$package->getName();
+            $assetConfig->setInstalledDirectory($directory);
+
+            try {
+                $bowerInfo = $bowerConfig->getPackageBowerFileContent($package);
+            } catch (\RuntimeException $e) {
+                $output->writeln($e->getMessage());
+                continue;
             }
+
             if (array_key_exists("version", $bowerInfo)) {
                 $assetConfig->setInstalledVersion($bowerInfo["version"]);
             }

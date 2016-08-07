@@ -11,7 +11,7 @@ namespace Erfans\AssetBundle\Agents;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-interface ReferenceAgentInterface extends AgentInterface
+interface InstallerInterface
 {
     /**
      * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
@@ -19,5 +19,6 @@ interface ReferenceAgentInterface extends AgentInterface
      * @param OutputInterface $output
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
      */
-    public function reference(array $assetConfigs, InputInterface $input, OutputInterface $output);
+    public function install(array $assetConfigs, InputInterface $input, OutputInterface $output);
+
 }

@@ -32,6 +32,50 @@ class AssetConfig
     /** @var  string $installedVersion */
     private $installedVersion;
 
+    /** @var  string $installer */
+    private $installer;
+
+    /** @var  string $installedDirectory*/
+    private $installedDirectory;
+
+    /** @var  string $outputDirectory*/
+    private $outputDirectory;
+
+    public function __construct(array $config = [])
+    {
+        if (key_exists("bundle", $config)) {
+            $this->setBundle($config["bundle"]);
+        }
+
+        if (key_exists("id", $config)) {
+            $this->setId($config["id"]);
+        }
+
+        if (key_exists("version", $config)) {
+            $this->setVersion($config["version"]);
+        }
+
+        if (key_exists("alias", $config)) {
+            $this->setAlias($config["alias"]);
+        }
+
+        if (key_exists("main_files", $config)) {
+            $this->setAlias($config["main_files"]);
+        }
+
+        if (key_exists("installer", $config)) {
+            $this->setInstaller($config["installer"]);
+        }
+
+        if (key_exists("installed_directory", $config)) {
+            $this->setInstalledDirectory($config["installed_directory"]);
+        }
+
+        if (key_exists("output_directory", $config)) {
+            $this->setOutputDirectory($config["output_directory"]);
+        }
+    }
+
     /**
      * @param string $id
      * @return AssetConfig
@@ -177,5 +221,60 @@ class AssetConfig
         return $this->installedVersion;
     }
 
+    /**
+     * @param string $installer
+     * @return AssetConfig
+     */
+    public function setInstaller($installer)
+    {
+        $this->installer = $installer;
 
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getInstaller()
+    {
+        return $this->installer;
+    }
+
+    /**
+     * @param string $installedDirectory
+     * @return AssetConfig
+     */
+    public function setInstalledDirectory($installedDirectory)
+    {
+        $this->installedDirectory = $installedDirectory;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getInstalledDirectory()
+    {
+        return $this->installedDirectory;
+    }
+
+    /**
+     * @param string $outputDirectory
+     * @return AssetConfig
+     */
+    public function setOutputDirectory($outputDirectory)
+    {
+        $this->outputDirectory = $outputDirectory;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOutputDirectory()
+    {
+        return $this->outputDirectory;
+    }
 }

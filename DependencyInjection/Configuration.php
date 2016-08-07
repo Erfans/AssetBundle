@@ -21,24 +21,21 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('erfans_asset');
 
-
         $rootNode
             ->children()
-            ->booleanNode("enabled")->defaultFalse()->end()
-            ->booleanNode("all_bundles")->defaultFalse()->end()
-            ->arrayNode("bundles")
-            ->prototype("scalar")->end()
-            ->defaultValue(["AppBundle"])
-            ->end()
-            ->arrayNode("download")->prototype("scalar")->end()->end()
-            ->arrayNode("reference")->prototype("scalar")->end()->end()
-            ->arrayNode("optimize")->prototype("scalar")->end()->end()
-            ->arrayNode("agents")
-            ->children()
-            ->append($this->getBowerConfig())
-            ->append($this->getRequireJsConfig())
-            ->end()
-            ->end()
+                ->booleanNode("enabled")->defaultFalse()->end()
+                ->booleanNode("all_bundles")->info("Consider all bundles to check their asset config.")->defaultFalse()->end()
+                ->arrayNode("bundles")
+                    ->info("Bundles to check their asset config file.")
+                    ->prototype("scalar")->end()
+                    ->defaultValue(["AppBundle"])
+                ->end()
+                ->arrayNode("agents")
+                    ->info("Available agents by this bundle.")
+                    ->children()
+                        ->append($this->getBowerConfig())
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;
@@ -50,17 +47,21 @@ class Configuration implements ConfigurationInterface
         $bowerNode = $treeBuilder->root('bower');
 
         $bowerNode
+            ->info("Bower agent to download defined assets.")
             ->children()
                 ->scalarNode("cache_path")
                     ->cannotBeEmpty()
                     ->defaultValue("%kernel.root_dir%/../var/erfans_asset/bower_cache/%kernel.environment%")
+                    ->info("Directory path to cache assets before installing. You need to change it if you use Symfony2.")
                 ->end()
                 ->scalarNode("directory")
                     ->cannotBeEmpty()
-                    ->info("The path in which installed components should be saved.".
-                        " If not specified this defaults to bower_components")
+                    ->info("Install directory of assets. default directory is 'web/bower_components'.")
                     ->defaultValue("web/bower_components")
                     ->end()
+                ->scalarNode("github_token")
+                    ->info("Github token to extend limitation of 60 repository per hour to 5000.")
+                ->end()
                 ->append($this->getBowerPackageConfig())
                 ->append($this->getBowerEnvironmentConfig())
             ->end();
@@ -163,7 +164,9 @@ class Configuration implements ConfigurationInterface
                     ->info(
                         "Dependencies are specified with a simple hash of package name to a ".
                         " server compatible identifier or URL. \n".
-                        "<https://github.com/bower/spec/blob/master/json.md#dependencies>"
+                        "<https://github.com/bower/spec/blob/master/json.md#dependencies> \n".
+                        "It is recommended to use bundle asset config file instead of global dependencies, ".
+                        "you can set more configuration in bundle asset config file"
                     )
                     ->end()
                 ->variableNode("dev_dependencies")
@@ -307,14 +310,5 @@ class Configuration implements ConfigurationInterface
             ->end();
 
         return $bowerNode;
-    }
-
-    private function getRequireJsConfig()
-    {
-        $treeBuilder = new TreeBuilder();
-        $requireJs = $treeBuilder->root('requirejs');
-
-
-        return $requireJs;
     }
 }

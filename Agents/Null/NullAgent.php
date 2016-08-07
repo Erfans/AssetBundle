@@ -9,13 +9,17 @@
 namespace Erfans\AssetBundle\Agents\Null;
 
 
-use Erfans\AssetBundle\Agents\DownloadAgentInterface;
-use Erfans\AssetBundle\Agents\OptimizeAgentInterface;
-use Erfans\AssetBundle\Agents\ReferenceAgentInterface;
+use Erfans\AssetBundle\Agents\InstallerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class NullAgent implements DownloadAgentInterface, ReferenceAgentInterface, OptimizeAgentInterface
+/**
+ * This agent do nothing and its for test purposes
+ *
+ * Class NullAgent
+ * @package Erfans\AssetBundle\Agents\Null
+ */
+class NullAgent implements InstallerInterface
 {
     /**
      * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
@@ -23,30 +27,9 @@ class NullAgent implements DownloadAgentInterface, ReferenceAgentInterface, Opti
      * @param OutputInterface $output
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
      */
-    public function download(array $assetConfigs, InputInterface $input, OutputInterface $output)
+    public function install(array $assetConfigs, InputInterface $input, OutputInterface $output)
     {
         return $assetConfigs;
     }
 
-    /**
-     * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
-     */
-    public function optimize(array $assetConfigs, InputInterface $input, OutputInterface $output)
-    {
-        return $assetConfigs;
-    }
-
-    /**
-     * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
-     */
-    public function reference(array $assetConfigs, InputInterface $input, OutputInterface $output)
-    {
-        return $assetConfigs;
-    }
 }
