@@ -77,7 +77,7 @@ class BowerAgent extends BaseAgent implements InstallerInterface
         $this->environmentConfig = $config["bower"];
         $this->cachePath = $config["cache_path"];
         $this->downloadPath = $config["directory"];
-        $this->githubToken = $config["github_token"];
+        $this->githubToken = key_exists("github_token", $config) ? $config["github_token"] : null;
 
         $this->rootDirectory = $rootDirectory;
 
