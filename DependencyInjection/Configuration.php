@@ -48,7 +48,8 @@ class Configuration implements ConfigurationInterface
         $fileNode = $treeBuilder->root('file');
 
         $fileNode
-            ->info("File agent to download defined assets.")
+            ->info("File agent to download defined assets by url.")
+                ->addDefaultsIfNotSet()
                 ->children()
                     ->scalarNode("directory")
                     ->cannotBeEmpty()
