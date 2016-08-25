@@ -16,6 +16,13 @@ services:
         tags:
           - {name: erfans_asset.agent, alias: bower}
 
+    erfans_asset.agents.file:
+        class: Erfans\AssetBundle\Agents\File\FileAgent
+        arguments:
+          - "%kernel.root_dir%"
+        tags:
+          - {name: erfans_asset.agent, alias: file}
+
     erfans_asset.agents.null:
         class: Erfans\AssetBundle\Agents\Null\NullAgent
         tags:

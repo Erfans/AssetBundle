@@ -78,6 +78,14 @@ erfans_asset:
     # Available agents by this bundle.
     agents:
 
+        # File agent to install assets by file url
+        file:
+            # Install directory
+            directory: "web/vendor"
+            
+            # Create directory per asset
+            create_directory: true
+
         # Bower agent to download defined assets.
         bower:
 
@@ -225,6 +233,9 @@ erfans_asset:
     all_bundles: true
 
     agents:
+        file:
+            directory: "web/target-folder"
+            create_directory: true
         bower:
             directory: "web/target-folder"
             github_token: github_token_to_extend_limitation
@@ -240,15 +251,21 @@ in `Resources/config` directory of bundle.
 #AppBundle\Resources\config\asset.yml
 assets:
     jquery: # alias of asset
-        installer: bower # name of installer, this bundle till now only have bower, you can define your own installer
+        installer: bower # name of installer, you can also define your own installer
         id: jquery       # id of repository which passes to installer
         version: ~1.9    # version of repository
+        
+    jquery_easing:
+        installer: file
+        id: http://gsgd.co.uk/sandbox/jquery/easing/jquery.easing.1.3.js        
 ```        
 
 Step 4: Install assets
 ---------------------
 To download and copy defined assets to target folder run command `erfans:asset:install` 
 by Symfony console.
+
+This bundle uses [bowerphp](https://bowerphp.org/ "Bee-Lab/bowerphp"). Since this library does not support downloading files by url I added a file installer which download asset files and put them in final directory.  
 
 Step 5: Add assets to frontend
 ------------------------------

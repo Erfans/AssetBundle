@@ -68,6 +68,14 @@ erfans_asset:
     # Available agents by this bundle.
     agents:
 
+        # File agent to install assets by file url
+        file:
+            # Install directory
+            directory: "web/vendor"
+
+            # Create directory per asset
+            create_directory: true
+
         # Bower agent to download defined assets.
         bower:
 
@@ -83,7 +91,7 @@ erfans_asset:
             # <https://github.com/bower/spec/blob/master/json.md>
             package:
 
-                # The name of the package as stored in the registry. 
+                # The name of the package as stored in the registry.
                 # <https://github.com/bower/spec/blob/master/json.md#name>
                 name:                 application
 
@@ -93,7 +101,7 @@ erfans_asset:
                 # The entry-point files necessary to use your package. Only one file per filetype.
                 main:                 []
 
-                # The type of module defined in the main JavaScript file. Can be one or an array of the following strings: 
+                # The type of module defined in the main JavaScript file. Can be one or an array of the following strings:
                 # <https://github.com/bower/spec/blob/master/json.md#moduletype>
                 module_type:          []
 
@@ -115,8 +123,8 @@ erfans_asset:
                 # The repository in which the source code can be found.
                 repository:           ~
 
-                # Dependencies are specified with a simple hash of package name to a  server compatible identifier or URL. 
-                # <https://github.com/bower/spec/blob/master/json.md#dependencies> 
+                # Dependencies are specified with a simple hash of package name to a  server compatible identifier or URL.
+                # <https://github.com/bower/spec/blob/master/json.md#dependencies>
                 # It is recommended to use bundle asset config file instead of global dependencies, you can set more configuration in bundle asset config file
                 dependencies:         ~
 
@@ -155,7 +163,7 @@ erfans_asset:
                     # The URL to use when publishing packages.
                     publish:              ~
 
-                # Define a custom template for shorthand package names. 
+                # Define a custom template for shorthand package names.
                 # <https://github.com/bower/spec/blob/master/config.md#shorthand-resolver>
                 shorthand_resolver:   ~
 
@@ -206,16 +214,21 @@ erfans_asset:
 
                 # Bower will ignore these dependencies when resolving packages.
                 ignored_dependencies:  []
-It is long configuration to customize bower agent however usual configuration is:
+It is long configuration to customize bower agent, however, usual necessary configuration is:
 
 #app\config\config.yml
 erfans_asset:
     all_bundles: true
 
     agents:
+        file:
+            directory: "web/target-folder"
+            create_directory: true
         bower:
             directory: "web/target-folder"
             github_token: github_token_to_extend_limitation
+Note that if you use Symfony2 you need to change cash directory in configuration.
+
 Step 3: Add bundle asset config file
 
 To define required third party asset for each bundle create asset.yml file
@@ -224,13 +237,19 @@ in Resources/config directory of bundle.
 #AppBundle\Resources\config\asset.yml
 assets:
     jquery: # alias of asset
-        installer: bower # name of installer, this bundle till now only have bower, you can define your own installer
+        installer: bower # name of installer, you can also define your own installer
         id: jquery       # id of repository which passes to installer
         version: ~1.9    # version of repository
+
+    jquery_easing:
+        installer: file
+        id: http://gsgd.co.uk/sandbox/jquery/easing/jquery.easing.1.3.js
 Step 4: Install assets
 
 To download and copy defined assets to target folder run command erfans:asset:install
 by Symfony console.
+
+This bundle uses bowerphp. Since this library does not support downloading files by url I added a file installer which download asset files and put them in final directory.
 
 Step 5: Add assets to frontend
 

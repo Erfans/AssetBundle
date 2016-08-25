@@ -33,12 +33,37 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode("agents")
                     ->info("Available agents by this bundle.")
                     ->children()
+                        ->append($this->getFileConfig())
                         ->append($this->getBowerConfig())
                     ->end()
                 ->end()
             ->end();
 
         return $treeBuilder;
+    }
+
+    private function getFileConfig()
+    {
+        $treeBuilder = new TreeBuilder();
+        $fileNode = $treeBuilder->root('file');
+
+        $fileNode
+            ->info("File agent to download defined assets.")
+                ->children()
+                    ->scalarNode("directory")
+                    ->cannotBeEmpty()
+                    ->info("Install directory of assets. default directory is 'web/vendor'.")
+                    ->defaultValue("web/vendor")
+                ->end()
+                ->booleanNode("create_directory")
+                    ->defaultTrue()
+                    ->info(
+                       "Create a new directory for each file with name of alias in download directory."
+                    )
+                ->end()
+            ->end();
+
+        return $fileNode;
     }
 
     private function getBowerConfig()

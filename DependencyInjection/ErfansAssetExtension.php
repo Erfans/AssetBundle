@@ -41,7 +41,11 @@ class ErfansAssetExtension extends Extension
             $definition->addArgument($config["agents"]["bower"]);
         }
 
-        //$container->setParameter("erfans_asset.bower.directory", $config["directory"]);
+        // === Bower agent ==== //
+        if (array_key_exists("agents", $config) && array_key_exists("file", $config["agents"])) {
+            $definition = $container->getDefinition("erfans_asset.agents.file");
+            $definition->addArgument($config["agents"]["file"]);
+        }
 
         unset($config["agents"]);
 

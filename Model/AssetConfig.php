@@ -27,7 +27,7 @@ class AssetConfig
     private $bundle;
 
     /** @var  array $mainFiles */
-    private $mainFiles;
+    private $mainFiles = [];
 
     /** @var  string $installedVersion */
     private $installedVersion;
@@ -35,10 +35,10 @@ class AssetConfig
     /** @var  string $installer */
     private $installer;
 
-    /** @var  string $installedDirectory*/
+    /** @var  string $installedDirectory */
     private $installedDirectory;
 
-    /** @var  string $outputDirectory*/
+    /** @var  string $outputDirectory */
     private $outputDirectory;
 
     public function __construct(array $config = [])
@@ -60,7 +60,7 @@ class AssetConfig
         }
 
         if (key_exists("main_files", $config)) {
-            $this->setAlias($config["main_files"]);
+            $this->setMainFiles($config["main_files"]);
         }
 
         if (key_exists("installer", $config)) {

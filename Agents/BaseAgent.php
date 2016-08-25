@@ -8,6 +8,7 @@
 
 namespace Erfans\AssetBundle\Agents;
 
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
@@ -18,8 +19,88 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * Holds common tools of agents
  */
-abstract class BaseAgent
+abstract class BaseAgent implements InstallerInterface
 {
+
+    /** @var OutputInterface $output */
+    protected $output;
+
+    /** @var  InputInterface $input */
+    protected $input;
+
+    /**
+     * @param OutputInterface $output
+     * @return void
+     */
+    public function setOutputInterface(OutputInterface $output)
+    {
+        $this->output = $output;
+    }
+
+    /**
+     * @return OutputInterface
+     */
+    protected function getOutput()
+    {
+        return $this->output;
+    }
+
+    /**
+     * @param InputInterface $input
+     * @return void
+     */
+    public function setInputInterface(InputInterface $input)
+    {
+        $this->input = $input;
+    }
+
+    /**
+     * @return InputInterface
+     */
+    protected function getInput()
+    {
+        return $this->input;
+    }
+
+    /**
+     * @param $message
+     * @param string $type
+     */
+    protected function log($message, $type = null)
+    {
+        if ($this->getOutput()) {
+
+            $typeOpen = $type ? "<$type>" : "";
+            $typeClose = $type ? "</$type>" : "";
+
+            $this->getOutput()->writeln($typeOpen.$message.$typeClose);
+        }
+    }
+
+    /**
+     * @param $message
+     */
+    protected function logInfo($message)
+    {
+        return $this->log($message, "info");
+    }
+
+    /**
+     * @param $message
+     */
+    protected function logQuestion($message)
+    {
+        return $this->log($message, "question");
+    }
+
+    /**
+     * @param $message
+     */
+    protected function logError($message)
+    {
+        return $this->log($message, "error");
+    }
+
     /**
      * Convert keys in an array to values of other array
      *
@@ -49,45 +130,75 @@ abstract class BaseAgent
      *
      * @param $path
      * @param $content
-     * @param string $errorMessage
-     * @param OutputInterface|null $output
      */
-    protected function dumpFile(
-        $path,
-        $content,
-        $errorMessage = "An error occurred while creating file.",
-        OutputInterface $output = null
-    ) {
+    protected function dumpFile($path, $content)
+    {
         $fileSystem = new FileSystem();
+        $errorMessage = "An error occurred while creating file.";
 
-        if ($output != null) {
-            $output->writeln("Creating file at ".$path);
-        }
+        $this->logInfo("Creating file at ".$path);
+
         try {
             $fileSystem->dumpFile($path, $content);
         } catch (IOException $e) {
-            throw new \RuntimeException($errorMessage." file path: ".$e->getPath());
+            throw new \RuntimeException($errorMessage." File path: ".$e->getPath());
         }
     }
 
 
-    protected function mkdir(
-        $path,
-        $errorMessage = "An error occurred while creating folder.",
-        OutputInterface $output = null
-    ) {
+    /**
+     * Check if file or folder exists in path
+     *
+     * @param $path
+     * @return bool
+     */
+    protected function exists($path)
+    {
         $fileSystem = new FileSystem();
+        return $fileSystem->exists($path);
+    }
 
-        if ($output != null) {
-            $output->writeln("Creating file at ".$path);
+    /**
+     * Creates a directory recursively.
+     *
+     * @param $path
+     */
+    protected function mkdir($path)
+    {
+        $fileSystem = new FileSystem();
+        $errorMessage = "An error occurred while creating folder.";
+
+        if ($fileSystem->exists($path) && !is_dir($path)) {
+            throw new \RuntimeException($errorMessage." The path '$path' points to a file.");
         }
+
+        if (is_dir($path)) {
+            $this->logInfo("Ignored creating directory at ".$path.". Already exists");
+
+            return;
+        }
+
+        $this->logInfo("Creating directory at ".$path);
+
         try {
             $fileSystem->mkdir($path);
         } catch (IOException $e) {
-            throw new \RuntimeException($errorMessage." folder path: ".$e->getPath());
+            throw new \RuntimeException($errorMessage." The path: ".$e->getPath());
         }
     }
 
+    /**
+     * Download file in stream manner (if possible)
+     *
+     * @param $srcPath
+     * @param $dstPath
+     */
+    protected function streamDownload($srcPath, $dstPath)
+    {
+        $this->logInfo("Downloading file at ".$srcPath);
+        file_put_contents($dstPath, fopen($srcPath, 'r'));
+        $this->logInfo("Download completed. File stored at ".$dstPath);
+    }
 
     /**
      * @param array $a

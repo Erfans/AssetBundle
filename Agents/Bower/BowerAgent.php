@@ -54,9 +54,6 @@ class BowerAgent extends BaseAgent implements InstallerInterface
     /** @var string $cachePath */
     private $cachePath;
 
-    /** @var  Filesystem $fileSystem */
-    private $fileSystem;
-
     /** @var string $downloadPath */
     private $downloadPath;
 
@@ -80,20 +77,16 @@ class BowerAgent extends BaseAgent implements InstallerInterface
         $this->githubToken = key_exists("github_token", $config) ? $config["github_token"] : null;
 
         $this->rootDirectory = $rootDirectory;
-
-        $this->fileSystem = new Filesystem();
     }
 
     /**
      * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
-     * @param InputInterface $input
-     * @param OutputInterface $output
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
      */
-    public function install(array $assetConfigs, InputInterface $input, OutputInterface $output)
+    public function install(array $assetConfigs)
     {
         // base folder will generate based on current environment
-        $this->mkdir($this->cachePath, null, $output);
+        $this->mkdir($this->cachePath);
 
         // create bower.json file
         // add dependencies of bundles to copy of main config
@@ -102,7 +95,7 @@ class BowerAgent extends BaseAgent implements InstallerInterface
             $config["dependencies"][$assetConfig->getId()] = $assetConfig->getVersion();
         }
 
-        $this->dumpFile($this->cachePath."/bower.json", $this->convertArrayToJsonObject($config), null, $output);
+        $this->dumpFile($this->cachePath."/bower.json", $this->convertArrayToJsonObject($config));
 
         // create .bowerrc file
         $envConfig = $this->environmentConfig;
@@ -110,7 +103,7 @@ class BowerAgent extends BaseAgent implements InstallerInterface
         $fileSystem = new Filesystem();
         $endPath = $this->rootDirectory."/../".$this->downloadPath;
         $envConfig["directory"] = $fileSystem->makePathRelative($endPath, $this->cachePath);
-        $this->dumpFile($this->cachePath."/.bowerrc", $this->convertArrayToJsonObject($envConfig), null, $output);
+        $this->dumpFile($this->cachePath."/.bowerrc", $this->convertArrayToJsonObject($envConfig));
 
         // Bowerphp install command
         $oldWorkingDir = getcwd();
@@ -125,7 +118,7 @@ class BowerAgent extends BaseAgent implements InstallerInterface
         }
 
         $installer = new Installer($bowerFileSystem, new ZipArchive(), $bowerConfig);
-        $bowerOutput = new BowerphpConsoleOutput($output);
+        $bowerOutput = new BowerphpConsoleOutput($this->getOutput());
 
         $bowerphp = new Bowerphp($bowerConfig, $bowerFileSystem, $githubClient, new GithubRepository(), $bowerOutput);
 
@@ -140,7 +133,7 @@ class BowerAgent extends BaseAgent implements InstallerInterface
             try {
                 $bowerInfo = $bowerConfig->getPackageBowerFileContent($package);
             } catch (\RuntimeException $e) {
-                $output->writeln($e->getMessage());
+                $this->getOutput()->writeln($e->getMessage());
                 continue;
             }
 

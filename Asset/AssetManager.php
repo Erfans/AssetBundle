@@ -154,9 +154,7 @@ class AssetManager
                 return $processor->process($configTree, $configArray);
             } catch (\Exception $ex) {
                 throw new \RuntimeException(
-                    "Could not process asset config for bundle '$bundle' at '$fileAddress'.",
-                    500,
-                    $ex
+                    "Could not process asset config for bundle '$bundle' at '$fileAddress'.", 500, $ex
                 );
             }
         }
@@ -211,7 +209,10 @@ class AssetManager
             $agentService = $this->getInstaller($agent);
 
             try {
-                $assetConfig = $agentService->install($config, $input, $output);
+                $agentService->setInputInterface($input);
+                $agentService->setOutputInterface($output);
+
+                $assetConfig = $agentService->install($config);
             } catch (\Exception $ex) {
                 $output->writeln("An error occurred while '$agent' tries to install");
 

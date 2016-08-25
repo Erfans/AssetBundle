@@ -23,13 +23,26 @@ class NullAgent implements InstallerInterface
 {
     /**
      * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
-     * @param InputInterface $input
-     * @param OutputInterface $output
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
      */
-    public function install(array $assetConfigs, InputInterface $input, OutputInterface $output)
+    public function install(array $assetConfigs)
     {
         return $assetConfigs;
     }
 
+    /**
+     * @param OutputInterface $output
+     * @return void
+     */
+    public function setOutputInterface(OutputInterface $output)
+    {
+    }
+
+    /**
+     * @param InputInterface $input
+     * @return void
+     */
+    public function setInputInterface(InputInterface $input)
+    {
+    }
 }
