@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Erfan
- * Date: 7/10/2016
- * Time: 22:55
- */
 
 namespace Erfans\AssetBundle\Tests\Controller;
 

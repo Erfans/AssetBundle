@@ -1,37 +1,52 @@
-This bundle purpose is to manage third party assets. As it is 
-supposed to not adding third party assets to your public bundles and 
-still your bundle may be relied on them alternatively you can only add 
-information of desired third party assets to the bundle and in final 
-product developer can install them. It is possible to define multiple agents 
-(downloader or installer) service and tag them with `erfans_asset.agent`
-and add `alias` attribute to use them in installing process. In asset 
-config files you can define different agent for each asset.
-By now only Bower agent has implemented in this bundle. 
+The purpose of this bundle is to manage third party assets for reusable bundles.
 
-Original tendency to develop this bundle was to have Mapping (for example 
-to wire up installed assets to RequireJs or to twig by assets alias) 
-and Optimizing step additionally to Downloading, but for now I have skipped 
-them.
+Motivation
+==========
+As it is mentioned in Symfony 
+[documentation](https://symfony.com/doc/master/bundles/best_practices.html#vendors):
+> A bundle should also not embed third-party libraries written in JavaScript, CSS or any other language.
+
+Additionally due to license restrictions and conflicts a bundle may could 
+not include third party assets 
+(e.g. [FOSCKEditorBundle](http://symfony.com/doc/master/bundles/FOSCKEditorBundle/usage/ckeditor.html)).
+
+To solve this situation, a bundle could only contain a configuration and 
+by running a command line this bundle will install the configured assets. 
+
+This bundle allows to define multiple agents (downloader or installer) 
+service and tag them with `erfans_asset.agent`
+and add `alias` attribute to use them in the installing process. 
+Bundles can contain asset config files to install assets by proper agent.
+(By now only Bower and File agents have been implemented.) 
 
 Installation
 ============
 
-Step 1: Download the Bundle
----------------------------
+Applications that use Symfony Flex
+----------------------------------
+
+Open a command console, enter your project directory and execute:
+
+```console
+$ composer require erfans/asset-bundle
+```
+
+Applications that don't use Symfony Flex
+----------------------------------------
+### Step 1: Download the Bundle
 
 Open a command console, enter your project directory and execute the
 following command to download the latest stable version of this bundle:
 
-```bash
-$ composer require erfans/asset-bundle "~1.3@dev"
+```console
+$ composer require erfans/asset-bundle
 ```
 
 This command requires you to have Composer installed globally, as explained
 in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
 of the Composer documentation.
 
-Step 2: Enable the Bundle
--------------------------
+### Step 2: Enable the Bundle
 
 Then, enable the bundle by adding it to the list of registered bundles
 in the `app/AppKernel.php` file of your project:
@@ -226,7 +241,7 @@ erfans_asset:
                 ignored_dependencies:  []
 ```        
 
-It is long configuration to customize bower agent, however, usual necessary configuration is:
+It is long configuration to customize the bower agent, however, usual necessary configurations are:
 ```Yaml
 #app\config\config.yml
 erfans_asset:
@@ -241,18 +256,19 @@ erfans_asset:
             github_token: github_token_to_extend_limitation
 ```
 
-Note that if you use Symfony2 you need to change cash directory in configuration.
+Please note, if you use Symfony2 you need to change the cash directory in configuration.
 
-Step 3: Add bundle asset config file
+Step 3: Add asset config file
 ---------------------
 To define required third party asset for each bundle create `asset.yml` file 
-in `Resources/config` directory of bundle. 
+in `Resources/config` directory of bundle.
+ 
 ```Yaml
 #AppBundle\Resources\config\asset.yml
 assets:
     jquery: # alias of asset
         installer: bower # name of installer, you can also define your own installer
-        id: jquery       # id of repository which passes to installer
+        id: jquery       # id of repository which passes to the installer
         version: ~1.9    # version of repository
         
     jquery_easing:
@@ -262,10 +278,12 @@ assets:
 
 Step 4: Install assets
 ---------------------
-To download and copy defined assets to target folder run command `erfans:asset:install` 
-by Symfony console.
+To download and copy defined assets to the target folder run command `erfans:asset:install` 
+in Symfony console.
 
-This bundle uses [bowerphp](https://bowerphp.org/ "Bee-Lab/bowerphp"). Since this library does not support downloading files by url I added a file installer which download asset files and put them in final directory.  
+The bower agent of this bundle is based on [bowerphp](https://bowerphp.org/ "Bee-Lab/bowerphp") which does not 
+currently support the downloading assets by url.
+Hence, a file installer is added to the bundle to download files and put them in the target directory.  
 
 Step 5: Add assets to frontend
 ------------------------------

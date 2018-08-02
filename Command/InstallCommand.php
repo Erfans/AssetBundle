@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Erfan
- * Date: 7/10/2016
- * Time: 22:52
- */
 
 namespace Erfans\AssetBundle\Command;
 

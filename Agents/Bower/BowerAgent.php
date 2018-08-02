@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Erfan
- * Date: 7/3/2016
- * Time: 16:53
- */
 
 namespace Erfans\AssetBundle\Agents\Bower;
 

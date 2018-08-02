@@ -102,7 +102,6 @@ class Configuration implements ConfigurationInterface
 
         $bowerNode
             ->info("<https://github.com/bower/spec/blob/master/json.md>")
-            ->cannotBeEmpty()
             ->addDefaultsIfNotSet()
             ->children()
                 ->scalarNode("name")
@@ -225,7 +224,6 @@ class Configuration implements ConfigurationInterface
 
         $bowerNode
             ->info("<https://github.com/bower/spec/blob/master/config.md>")
-            ->cannotBeEmpty()
             ->addDefaultsIfNotSet()
             ->children()
                 ->arrayNode("registry")
