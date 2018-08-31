@@ -75,7 +75,9 @@ class BowerAgent extends BaseAgent implements InstallerInterface
 
     /**
      * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
+     *
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
+     * @throws \Exception
      */
     public function install(array $assetConfigs)
     {
@@ -114,9 +116,9 @@ class BowerAgent extends BaseAgent implements InstallerInterface
         $installer = new Installer($bowerFileSystem, new ZipArchive(), $bowerConfig);
         $bowerOutput = new BowerphpConsoleOutput($this->getOutput());
 
-        $bowerphp = new Bowerphp($bowerConfig, $bowerFileSystem, $githubClient, new GithubRepository(), $bowerOutput);
+        $bowerPhp = new Bowerphp($bowerConfig, $bowerFileSystem, $githubClient, new GithubRepository(), $bowerOutput);
 
-        $bowerphp->installDependencies($installer);
+        $bowerPhp->installDependencies($installer);
 
         foreach ($assetConfigs as $assetConfig) {
             $package = new Package($assetConfig->getId());

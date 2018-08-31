@@ -13,13 +13,12 @@ use Symfony\Component\DependencyInjection\Loader;
  *
  * @link http://symfony.com/doc/current/cookbook/bundles/extension.html
  */
-class ErfansAssetExtension extends Extension
-{
+class ErfansAssetExtension extends Extension {
+
     /**
      * {@inheritdoc}
      */
-    public function load(array $configs, ContainerBuilder $container)
-    {
+    public function load(array $configs, ContainerBuilder $container) {
 
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
@@ -31,7 +30,7 @@ class ErfansAssetExtension extends Extension
         $taggedServices = $container->findTaggedServiceIds('erfans_asset.agent');
         foreach ($taggedServices as $id => $tags) {
             foreach ($tags as $attributes) {
-                $definition->addMethodCall('addInstaller', array(new Reference($id), $attributes["alias"]));
+                $definition->addMethodCall('addInstaller', [new Reference($id), $attributes["alias"]]);
             }
         }
 

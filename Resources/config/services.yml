@@ -6,7 +6,8 @@ services:
     erfans_asset.asset_manager:
         class: Erfans\AssetBundle\Asset\AssetManager
         arguments:
-          - "@service_container"
+          - "@erfans_asset.util.path"
+          - "@parameter_bag"
           - "@erfans_asset.config"
 
     erfans_asset.agents.bower:
@@ -27,3 +28,16 @@ services:
         class: Erfans\AssetBundle\Agents\Null\NullAgent
         tags:
           - {name: erfans_asset.agent, alias: null}
+
+    erfans_asset.util.path:
+        class: Erfans\AssetBundle\Util\PathUtil
+        arguments:
+            - "@parameter_bag"
+
+    # commands
+    erfans_asset.commands.install:
+        class: Erfans\AssetBundle\Command\InstallCommand
+        arguments:
+            - "@erfans_asset.asset_manager"
+        tags:
+            - {name: console.command}

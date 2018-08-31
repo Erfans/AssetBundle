@@ -4,17 +4,21 @@ namespace Erfans\AssetBundle\Asset;
 
 use Erfans\AssetBundle\Agents\InstallerInterface;
 use Erfans\AssetBundle\Model\AssetConfig;
+use Erfans\AssetBundle\Util\PathUtil;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AssetManager
-{
-    /** @var ContainerInterface $container */
-    private $container;
+class AssetManager {
+
+    /** @var PathUtil $pathUtil */
+    private $pathUtil;
+
+    /** @var ParameterBagInterface $params */
+    private $params;
 
     /** @var Config $config */
     private $config;
@@ -25,30 +29,30 @@ class AssetManager
     /**
      * Manager constructor.
      *
-     * @param ContainerInterface $container
-     * @param Config $config
+     * @param PathUtil                                                                  $pathUtil
+     * @param \Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface $params
+     * @param Config                                                                    $config
      */
-    public function __construct(ContainerInterface $container, Config $config)
-    {
-        $this->container = $container;
+    public function __construct(PathUtil $pathUtil, ParameterBagInterface $params, Config $config) {
+        $this->pathUtil = $pathUtil;
+        $this->params = $params;
         $this->config = $config;
     }
 
     /**
      * @param InstallerInterface $agent
-     * @param $alias
+     * @param                    $alias
      */
-    public function addInstaller(InstallerInterface $agent, $alias)
-    {
+    public function addInstaller(InstallerInterface $agent, $alias) {
         $this->installers[$alias] = $agent;
     }
 
     /**
      * @param $alias
+     *
      * @return InstallerInterface
      */
-    public function getInstaller($alias)
-    {
+    public function getInstaller($alias) {
         if (!array_key_exists($alias, $this->installers)) {
             throw new \InvalidArgumentException(
                 "Agent with alias '$alias' does not found.".
@@ -62,10 +66,9 @@ class AssetManager
     /**
      * @return \Symfony\Component\Config\Definition\NodeInterface
      */
-    public function getConfigTreeBuilder()
-    {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('assets');
+    public function getConfigTreeBuilder() {
+        $treeBuilder = new TreeBuilder('assets');
+        $rootNode = $treeBuilder->getRootNode();
 
         $rootNode
             ->beforeNormalization()
@@ -102,53 +105,48 @@ class AssetManager
      *
      * @return array
      */
-    public function getBundles()
-    {
+    public function getBundles() {
         if ($this->config->isAllBundles()) {
-            return array_keys($this->container->getParameter('kernel.bundles'));
+            return array_keys($this->params->get('kernel.bundles'));
         } else {
             return $this->config->getBundles();
         }
     }
 
     /**
-     * get path of bundle main file
+     * @param $bundle
      *
-     * @param $bundle
-     * @return string
-     */
-    protected function getBundlePath($bundle)
-    {
-        $bundles = $this->container->getParameter('kernel.bundles');
-
-        if (!array_key_exists($bundle, $bundles)) {
-            throw new \InvalidArgumentException("Bundle '$bundle' not found in registered bundles.");
-        }
-
-        return $this->container->getParameter('kernel.bundles')[$bundle];
-    }
-
-    /**
-     * @param $bundle
      * @return array|null
+     * @throws \ReflectionException
      */
-    protected function getBundleAssetConfigs($bundle)
-    {
-        $bundlePath = $this->getBundlePath($bundle);
-        $reflection = new \ReflectionClass($bundlePath);
+    protected function getBundleAssetConfigs($bundle) {
+        $filePath = $this->pathUtil->getBundleFile($bundle, '/Resources/config/asset.yml');
 
         $configTree = $this->getConfigTreeBuilder();
 
-        $fileAddress = dirname($reflection->getFilename()).'/Resources/config/asset.yml';
-
-        if (is_file($file = $fileAddress)) {
-            $configArray = Yaml::parse(file_get_contents(realpath($file)));
+        if (is_file($file = $filePath)) {
+            $configArray = Yaml::parse($this->pathUtil->getContent($file));
             $processor = new Processor();
             try {
-                return $processor->process($configTree, $configArray);
+                $config = $processor->process($configTree, $configArray);
+
+                xdebug_break();
+                foreach ($config as $key => $value) {
+                    if (isset($value["output_directory"])) {
+                        $value["output_directory"] = str_replace(
+                            '%bundle%',
+                            $this->pathUtil->getBundleDirectory($bundle),
+                            $value["output_directory"]
+                        );
+
+                        $config[$key] = $value;
+                    }
+                }
+
+                return $config;
             } catch (\Exception $ex) {
                 throw new \RuntimeException(
-                    "Could not process asset config for bundle '$bundle' at '$fileAddress'.", 500, $ex
+                    "Could not process asset config for bundle '$bundle' at '$filePath'.", 500, $ex
                 );
             }
         }
@@ -157,17 +155,19 @@ class AssetManager
     }
 
     /**
-     * @param InputInterface $input
+     * @param InputInterface  $input
      * @param OutputInterface $output
+     * @param array           $config
+     *
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
+     * @throws \ReflectionException
      */
-    public function install(InputInterface $input, OutputInterface $output)
-    {
+    public function install(InputInterface $input, OutputInterface $output, array $config = []) {
         // Create $assetConfigs
         /** @var \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs */
         $assetConfigs = [];
 
-        $bundles = $this->getBundles();
+        $bundles = isset($config["bundles"]) ? $config["bundles"] : $this->getBundles();
         foreach ($bundles as $bundle) {
             $assets = $this->getBundleAssetConfigs($bundle);
             if ($assets != null) {
@@ -184,12 +184,12 @@ class AssetManager
 
     /**
      * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param InputInterface                          $input
+     * @param OutputInterface                         $output
+     *
      * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
      */
-    protected function doInstall(array $assetConfigs, InputInterface $input, OutputInterface $output)
-    {
+    protected function doInstall(array $assetConfigs, InputInterface $input, OutputInterface $output) {
         $configs = [];
         foreach ($assetConfigs as $assetConfig) {
             $configs [$assetConfig->getInstaller()][] = $assetConfig;
@@ -218,5 +218,4 @@ class AssetManager
 
         return $assetConfigs;
     }
-
 }
