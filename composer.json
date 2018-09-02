@@ -1,7 +1,7 @@
 {
   "name": "erfans/asset-bundle",
   "description": "Symfony bundle to install third party assets.",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "type": "symfony-bundle",
   "keywords": [
     "erfans",
@@ -15,18 +15,13 @@
     }
   ],
   "require": {
-    "php": ">=5.3.3",
-    "symfony/framework-bundle": "~2.3|~3.0|~4.0",
+    "php": ">=7.1",
+    "symfony/framework-bundle": "~3.0|~4.0",
     "beelab/bowerphp": "~0.5"
   },
   "autoload": {
     "psr-4": {
       "Erfans\\AssetBundle\\": ""
-    }
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "1.3.1-dev"
     }
   }
 }
