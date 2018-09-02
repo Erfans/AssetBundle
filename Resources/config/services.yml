@@ -31,6 +31,7 @@ services:
 
     erfans_asset.util.path:
         class: Erfans\AssetBundle\Util\PathUtil
+        public: true
         arguments:
             - "@parameter_bag"
 

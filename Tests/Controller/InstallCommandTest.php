@@ -7,22 +7,17 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Erfans\AssetBundle\Command\InstallCommand;
 
-class InstallCommandTest extends KernelTestCase
-{
+class InstallCommandTest extends KernelTestCase {
 
-    public function testExecute()
-    {
-        $kernel = $this->createKernel();
-        $kernel->boot();
+    public function testExecute() {
 
+        $kernel = self::bootKernel();
         $application = new Application($kernel);
-        $application->add(new InstallCommand());
-
         $command = $application->find('erfans:asset:install');
+
         $commandTester = new CommandTester($command);
-        $commandTester->execute([]);
+        $commandTester->execute(['bundles' => ['ErfansAssetBundle']]);
 
-        //$this->assertRegExp('/.../', $commandTester->getDisplay());
+        $this->assertRegExp('/.../', $commandTester->getDisplay());
     }
-
 }

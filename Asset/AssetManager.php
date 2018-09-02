@@ -168,6 +168,11 @@ class AssetManager {
         $assetConfigs = [];
 
         $bundles = isset($config["bundles"]) ? $config["bundles"] : $this->getBundles();
+
+        if (is_string($bundles)) {
+            $bundles = explode(" ", $bundles);
+        }
+
         foreach ($bundles as $bundle) {
             $assets = $this->getBundleAssetConfigs($bundle);
             if ($assets != null) {
