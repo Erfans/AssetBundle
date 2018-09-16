@@ -43,8 +43,8 @@ class AssetManagerConfig {
      *
      * @return string
      */
-    public function getDefaultOutputDirectory() {
-        return $this->getConfig("default_output_directory");
+    public function getDefaultInstallDirectory() {
+        return $this->getConfig("default_install_directory");
     }
 
     /**
@@ -52,9 +52,9 @@ class AssetManagerConfig {
      *
      * @return string|null
      */
-    public function getAgentDefaultOutputDirectory($agent) {
+    public function getAgentDefaultInstallDirectory($agent) {
         $agentConfig = $this->getConfig($agent);
-        return $agentConfig && isset($agentConfig["default_output_directory"]) ?
-            $agentConfig["default_output_directory"] : null;
+        return $agentConfig && isset($agentConfig["default_install_directory"]) ?
+            $agentConfig["default_install_directory"] : null;
     }
 }

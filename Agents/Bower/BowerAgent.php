@@ -12,6 +12,7 @@ use Bowerphp\Repository\GithubRepository;
 use Bowerphp\Util\ZipArchive;
 use Erfans\AssetBundle\Agents\BaseAgent;
 use Erfans\AssetBundle\Agents\InstallerInterface;
+use Erfans\AssetBundle\DependencyInjection\Configuration;
 use Erfans\AssetBundle\Util\FileSystem;
 use Github\Client;
 use Bowerphp\Util\Filesystem as BowerPhpFileSystem;
@@ -42,8 +43,8 @@ class BowerAgent extends BaseAgent implements InstallerInterface, ConfigurableIn
     /** @var string $cachePath */
     private $cachePath;
 
-    /** @var string $defaultOutputDirectory */
-    private $defaultOutputDirectory;
+    /** @var string $defaultInstallDirectory */
+    private $defaultInstallDirectory;
 
     /** @var  string $githubToken */
     private $githubToken;
@@ -71,7 +72,7 @@ class BowerAgent extends BaseAgent implements InstallerInterface, ConfigurableIn
         $config = $this->normalizeConfig($config, $this->configKeysMap);
 
         $this->cachePath = $config["cache_path"];
-        $this->defaultOutputDirectory = $config["default_output_directory"];
+        $this->defaultInstallDirectory = $config["default_install_directory"];
         $this->githubToken = key_exists("github_token", $config) ? $config["github_token"] : null;
 
         $this->environmentConfig = $config["bower"];
@@ -90,14 +91,14 @@ class BowerAgent extends BaseAgent implements InstallerInterface, ConfigurableIn
 
         foreach ($assetConfigs as $assetConfig) {
 
-            $outputDirectory = $assetConfig->getOutputDirectory();
+            $installDirectory = $assetConfig->getInstallDirectory();
 
             // log
             $this->logger->info("Start downloading ".$assetConfig->getAlias()." for bundle ".$assetConfig->getBundle());
-            $this->logger->info("Install directory ".$outputDirectory);
+            $this->logger->info("Install directory ".$installDirectory);
 
             // Bowerphp install command
-            $bowerConfig = new BowerConfig($this->cachePath, $outputDirectory, [], $this->fileSystem);
+            $bowerConfig = new BowerConfig($this->cachePath, $installDirectory, [], $this->fileSystem);
             $githubClient = new Client();
 
             if (!empty($this->githubToken)) {

@@ -54,7 +54,7 @@ class AssetConfig {
     /**
      * @return string
      */
-    public function getOutputDirectory() {
-        return $this->getConfig("output_directory");
+    public function getInstallDirectory() {
+        return $this->getConfig("install_directory");
     }
 }

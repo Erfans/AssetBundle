@@ -109,7 +109,7 @@ class AssetManager implements ConfigurableInterface {
             ->scalarNode("installer")->isRequired()->cannotBeEmpty()->end()
             ->scalarNode("id")->end()
             ->scalarNode("version")->end()
-            ->scalarNode("output_directory")->end()
+            ->scalarNode("install_directory")->end()
             ->end()
             ->end()
             ->end();
@@ -185,25 +185,25 @@ class AssetManager implements ConfigurableInterface {
                     $asset["bundle"] = $bundle;
 
                     // set output directory
-                    $outputDirectory = $asset["output_directory"];
-                    $outputDirectory = isset($outputDirectory) ? $outputDirectory :
-                        $this->config->getAgentDefaultOutputDirectory($asset["agent"]);
-                    $outputDirectory = isset($outputDirectory) ? $outputDirectory :
-                        $this->config->getDefaultOutputDirectory();
+                    $installDirectory = $asset["install_directory"];
+                    $installDirectory = isset($installDirectory) ? $installDirectory :
+                        $this->config->getAgentDefaultInstallDirectory($asset["agent"]);
+                    $installDirectory = isset($installDirectory) ? $installDirectory :
+                        $this->config->getDefaultInstallDirectory();
 
                     // replace bundle variable with bundle directory
-                    $outputDirectory = str_replace(
+                    $installDirectory = str_replace(
                         Configuration::BUNDLE_VARIABLE,
                         $this->fileSystem->getBundleDirectory($bundle),
-                        $outputDirectory
+                        $installDirectory
                     );
 
                     // convert to absolute path
-                    if (!$this->fileSystem->isAbsolutePath($outputDirectory)) {
-                        $outputDirectory = $this->rootDirectory."/../".$outputDirectory;
+                    if (!$this->fileSystem->isAbsolutePath($installDirectory)) {
+                        $installDirectory = $this->rootDirectory."/../".$installDirectory;
                     }
 
-                    $asset["output_directory"] = $outputDirectory;
+                    $asset["install_directory"] = $installDirectory;
 
                     // make asset config object
                     $assetConfig = new AssetConfig($asset);

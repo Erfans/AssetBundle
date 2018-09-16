@@ -49,16 +49,16 @@ class FileAgent extends BaseAgent implements InstallerInterface, ConfigurableInt
         /** @var AssetConfig $assetConfig */
         foreach ($assetConfigs as $assetConfig) {
 
-            $outputDirectory = $assetConfig->getOutputDirectory();
-            $this->fileSystem->mkdir($outputDirectory);
+            $installDirectory = $assetConfig->getInstallDirectory();
+            $this->fileSystem->mkdir($installDirectory);
 
             if (array_key_exists("create_directory", $this->config) && $this->config["create_directory"]) {
-                $outputDirectory .= "/".$assetConfig->getAlias();
-                $this->fileSystem->mkdir($outputDirectory);
+                $installDirectory .= "/".$assetConfig->getAlias();
+                $this->fileSystem->mkdir($installDirectory);
             }
 
             $fileName = basename($assetConfig->getId());
-            $filePath = $outputDirectory."/".$fileName;
+            $filePath = $installDirectory."/".$fileName;
 
             if ($this->fileSystem->exists($filePath)) {
                 $this->logger->info("File '$fileName' is already installed.");

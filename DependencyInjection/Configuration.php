@@ -15,6 +15,8 @@ class Configuration implements ConfigurationInterface
 {
 
     const BUNDLE_VARIABLE = "?bundle";
+    const INSTALL_DIRECTORY = "install_directory";
+    const DEFAULT_INSTALL_DIRECTORY = "default_install_directory";
 
     /**
      * {@inheritdoc}
@@ -35,8 +37,8 @@ class Configuration implements ConfigurationInterface
                     ->prototype("scalar")->end()
                     ->defaultValue(["AppBundle"])
                 ->end()
-                ->scalarNode("default_output_directory")
-                    ->info("The default output directory. The default value us $bundleVariable/Resources/public; $bundleVariable will be replaced with the bundle directory.")
+                ->scalarNode("default_install_directory")
+                    ->info("The default install directory. The default value us $bundleVariable/Resources/public; $bundleVariable will be replaced with the bundle directory.")
                     ->defaultValue("$bundleVariable/Resources/public")
                 ->end()
                 ->arrayNode("agents")
@@ -62,7 +64,7 @@ class Configuration implements ConfigurationInterface
             ->info("File agent to download defined assets by url.")
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->scalarNode("default_output_directory")
+                    ->scalarNode("default_install_directory")
                     ->cannotBeEmpty()
                     ->info("Default directory to install assets. default directory is '$bundleVariable/Resources/public'.")
                     ->defaultValue("$bundleVariable/Resources/public")
@@ -91,7 +93,7 @@ class Configuration implements ConfigurationInterface
                     ->defaultValue("%kernel.root_dir%/../var/erfans_asset/bower_cache/%kernel.environment%")
                     ->info("Directory path to cache assets before installing. You need to change it if you use Symfony2.")
                 ->end()
-                ->scalarNode("default_output_directory")
+                ->scalarNode("default_install_directory")
                     ->cannotBeEmpty()
                     ->info("Default directory to install assets. The default value is '$bundleVariable/Resources/public'.")
                     ->defaultValue("$bundleVariable/Resources/public")
