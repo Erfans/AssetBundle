@@ -2,6 +2,7 @@
 
 namespace Erfans\AssetBundle\DependencyInjection;
 
+use App\Erfans\AssetBundle\Asset\ConfigurableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Reference;
@@ -20,35 +21,34 @@ class ErfansAssetExtension extends Extension {
      */
     public function load(array $configs, ContainerBuilder $container) {
 
-        $configuration = new Configuration();
-        $config = $this->processConfiguration($configuration, $configs);
+        $config = $this->processConfiguration(new Configuration(), $configs);
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
 
+        $agents = array_key_exists("agents", $config) ? $config["agents"] : [];
+
         $definition = $container->findDefinition('erfans_asset.asset_manager');
+        $definition->addMethodCall("setConfig", [$config]);
+
         $taggedServices = $container->findTaggedServiceIds('erfans_asset.agent');
         foreach ($taggedServices as $id => $tags) {
             foreach ($tags as $attributes) {
-                $definition->addMethodCall('addInstaller', [new Reference($id), $attributes["alias"]]);
+
+                $alias = $attributes["alias"];
+                $definition->addMethodCall('addInstaller', [new Reference($id), $alias]);
+
+                if (array_key_exists($alias, $agents)) {
+                    $agentConfig = $agents[$alias];
+
+                    $agentDefinition = $container->getDefinition($id);
+
+                    $agentClass = $agentDefinition->getClass();
+                    if (is_a($agentClass, ConfigurableInterface::class, true)) {
+                        $agentDefinition->addMethodCall("setConfig", [$agentConfig]);
+                    }
+                }
             }
         }
-
-        // === Bower agent ==== //
-        if (array_key_exists("agents", $config) && array_key_exists("bower", $config["agents"])) {
-            $definition = $container->getDefinition("erfans_asset.agents.bower");
-            $definition->addArgument($config["agents"]["bower"]);
-        }
-
-        // === File agent ==== //
-        if (array_key_exists("agents", $config) && array_key_exists("file", $config["agents"])) {
-            $definition = $container->getDefinition("erfans_asset.agents.file");
-            $definition->addArgument($config["agents"]["file"]);
-        }
-
-        unset($config["agents"]);
-
-        $definition = $container->getDefinition("erfans_asset.config");
-        $definition->addArgument($config);
     }
 }

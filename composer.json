@@ -1,27 +1,28 @@
 {
-  "name": "erfans/asset-bundle",
-  "description": "Symfony bundle to install third party assets.",
-  "version": "1.4.0",
-  "type": "symfony-bundle",
-  "keywords": [
-    "erfans",
-    "assets"
-  ],
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Erfans",
-      "homepage": "https://github.com/Erfans"
+    "name": "erfans/asset-bundle",
+    "description": "Symfony bundle to install third party assets.",
+    "version": "1.4.0",
+    "type": "symfony-bundle",
+    "keywords": [
+        "erfans",
+        "assets"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Erfans",
+            "homepage": "https://github.com/Erfans"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "ext-json": "*",
+        "symfony/framework-bundle": "~3.0|~4.0",
+        "beelab/bowerphp": "~0.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Erfans\\AssetBundle\\": ""
+        }
     }
-  ],
-  "require": {
-    "php": ">=7.1",
-    "symfony/framework-bundle": "~3.0|~4.0",
-    "beelab/bowerphp": "~0.5"
-  },
-  "autoload": {
-    "psr-4": {
-      "Erfans\\AssetBundle\\": ""
-    }
-  }
 }

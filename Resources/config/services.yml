@@ -1,36 +1,28 @@
 services:
-
-    erfans_asset.config:
-        class: Erfans\AssetBundle\Asset\Config
-
     erfans_asset.asset_manager:
         class: Erfans\AssetBundle\Asset\AssetManager
         arguments:
-          - "@erfans_asset.util.path"
+          - "%kernel.root_dir%"
+          - "@erfans_asset.util.file_system"
           - "@parameter_bag"
-          - "@erfans_asset.config"
 
     erfans_asset.agents.bower:
         class: Erfans\AssetBundle\Agents\Bower\BowerAgent
         arguments:
           - "%kernel.root_dir%"
+          - "@erfans_asset.util.file_system"
         tags:
           - {name: erfans_asset.agent, alias: bower}
 
     erfans_asset.agents.file:
         class: Erfans\AssetBundle\Agents\File\FileAgent
         arguments:
-          - "%kernel.root_dir%"
+          - "@erfans_asset.util.file_system"
         tags:
           - {name: erfans_asset.agent, alias: file}
 
-    erfans_asset.agents.null:
-        class: Erfans\AssetBundle\Agents\Null\NullAgent
-        tags:
-          - {name: erfans_asset.agent, alias: null}
-
-    erfans_asset.util.path:
-        class: Erfans\AssetBundle\Util\PathUtil
+    erfans_asset.util.file_system:
+        class: Erfans\AssetBundle\Util\FileSystem
         public: true
         arguments:
             - "@parameter_bag"

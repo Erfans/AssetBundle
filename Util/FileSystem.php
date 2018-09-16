@@ -3,14 +3,15 @@
 namespace Erfans\AssetBundle\Util;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Filesystem\Filesystem as BaseFileSystem;
 
-class PathUtil {
+class FileSystem extends BaseFileSystem {
 
     /** @var \Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface $params */
     private $params;
 
     /**
-     * PathUtil constructor.
+     * FileSystem constructor.
      *
      * @param \Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface $params
      */

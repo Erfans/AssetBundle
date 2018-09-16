@@ -2,25 +2,32 @@
 
 namespace Erfans\AssetBundle\Asset;
 
+use App\Erfans\AssetBundle\Asset\ConfigurableInterface;
 use Erfans\AssetBundle\Agents\InstallerInterface;
-use Erfans\AssetBundle\Model\AssetConfig;
-use Erfans\AssetBundle\Util\PathUtil;
+use Erfans\AssetBundle\Config\AssetConfig;
+use Erfans\AssetBundle\Config\AssetManagerConfig;
+use Erfans\AssetBundle\DependencyInjection\Configuration;
+use Erfans\AssetBundle\Util\FileSystem;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AssetManager {
+class AssetManager implements ConfigurableInterface {
 
-    /** @var PathUtil $pathUtil */
-    private $pathUtil;
+    /** @var string $rootDirectory */
+    private $rootDirectory;
+
+    /** @var FileSystem $fileSystem */
+    private $fileSystem;
 
     /** @var ParameterBagInterface $params */
     private $params;
 
-    /** @var Config $config */
+    /** @var AssetManagerConfig $config */
     private $config;
 
     /** @var array $installers */
@@ -29,14 +36,25 @@ class AssetManager {
     /**
      * Manager constructor.
      *
-     * @param PathUtil                                                                  $pathUtil
+     * @param                                                                           $rootDirectory
+     * @param FileSystem                                                                $fileSystem
      * @param \Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface $params
-     * @param Config                                                                    $config
      */
-    public function __construct(PathUtil $pathUtil, ParameterBagInterface $params, Config $config) {
-        $this->pathUtil = $pathUtil;
+    public function __construct($rootDirectory, FileSystem $fileSystem, ParameterBagInterface $params) {
+        $this->rootDirectory = $rootDirectory;
+        $this->fileSystem = $fileSystem;
         $this->params = $params;
-        $this->config = $config;
+    }
+
+    /**
+     * Set a related configuration to the agent from erfans_asset config
+     *
+     * @param array $config
+     *
+     * @return void
+     */
+    public function setConfig(array $config) {
+        $this->config = new AssetManagerConfig($config);
     }
 
     /**
@@ -91,7 +109,6 @@ class AssetManager {
             ->scalarNode("installer")->isRequired()->cannotBeEmpty()->end()
             ->scalarNode("id")->end()
             ->scalarNode("version")->end()
-            ->arrayNode("main_files")->prototype("scalar")->end()->end()
             ->scalarNode("output_directory")->end()
             ->end()
             ->end()
@@ -120,30 +137,15 @@ class AssetManager {
      * @throws \ReflectionException
      */
     protected function getBundleAssetConfigs($bundle) {
-        $filePath = $this->pathUtil->getBundleFile($bundle, '/Resources/config/asset.yml');
+        $filePath = $this->fileSystem->getBundleFile($bundle, '/Resources/config/asset.yml');
 
         $configTree = $this->getConfigTreeBuilder();
 
         if (is_file($file = $filePath)) {
-            $configArray = Yaml::parse($this->pathUtil->getContent($file));
+            $configArray = Yaml::parse($this->fileSystem->getContent($file));
             $processor = new Processor();
             try {
-                $config = $processor->process($configTree, $configArray);
-
-                xdebug_break();
-                foreach ($config as $key => $value) {
-                    if (isset($value["output_directory"])) {
-                        $value["output_directory"] = str_replace(
-                            '%bundle%',
-                            $this->pathUtil->getBundleDirectory($bundle),
-                            $value["output_directory"]
-                        );
-
-                        $config[$key] = $value;
-                    }
-                }
-
-                return $config;
+                return $processor->process($configTree, $configArray);
             } catch (\Exception $ex) {
                 throw new \RuntimeException(
                     "Could not process asset config for bundle '$bundle' at '$filePath'.", 500, $ex
@@ -159,12 +161,14 @@ class AssetManager {
      * @param OutputInterface $output
      * @param array           $config
      *
-     * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
      * @throws \ReflectionException
      */
     public function install(InputInterface $input, OutputInterface $output, array $config = []) {
+
+        $logger = new ConsoleLogger($output);
+
         // Create $assetConfigs
-        /** @var \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs */
+        /** @var \Erfans\AssetBundle\Config\AssetConfig[] $assetConfigs */
         $assetConfigs = [];
 
         $bundles = isset($config["bundles"]) ? $config["bundles"] : $this->getBundles();
@@ -177,50 +181,68 @@ class AssetManager {
             $assets = $this->getBundleAssetConfigs($bundle);
             if ($assets != null) {
                 foreach ($assets as $asset) {
+                    // set related bundle to asset config
                     $asset["bundle"] = $bundle;
+
+                    // set output directory
+                    $outputDirectory = $asset["output_directory"];
+                    $outputDirectory = isset($outputDirectory) ? $outputDirectory :
+                        $this->config->getAgentDefaultOutputDirectory($asset["agent"]);
+                    $outputDirectory = isset($outputDirectory) ? $outputDirectory :
+                        $this->config->getDefaultOutputDirectory();
+
+                    // replace bundle variable with bundle directory
+                    $outputDirectory = str_replace(
+                        Configuration::BUNDLE_VARIABLE,
+                        $this->fileSystem->getBundleDirectory($bundle),
+                        $outputDirectory
+                    );
+
+                    // convert to absolute path
+                    if (!$this->fileSystem->isAbsolutePath($outputDirectory)) {
+                        $outputDirectory = $this->rootDirectory."/../".$outputDirectory;
+                    }
+
+                    $asset["output_directory"] = $outputDirectory;
+
+                    // make asset config object
                     $assetConfig = new AssetConfig($asset);
                     $assetConfigs[] = $assetConfig;
                 }
             }
         }
 
-        return $this->doInstall($assetConfigs, $input, $output);
-    }
+        $agentConfigs = [];
 
-    /**
-     * @param \Erfans\AssetBundle\Model\AssetConfig[] $assetConfigs
-     * @param InputInterface                          $input
-     * @param OutputInterface                         $output
-     *
-     * @return \Erfans\AssetBundle\Model\AssetConfig[] assetConfigs
-     */
-    protected function doInstall(array $assetConfigs, InputInterface $input, OutputInterface $output) {
-        $configs = [];
+        /**
+         * Separate the asset configs based on installer
+         *
+         * @var AssetConfig $assetConfig
+         */
         foreach ($assetConfigs as $assetConfig) {
-            $configs [$assetConfig->getInstaller()][] = $assetConfig;
+            $agentConfigs [$assetConfig->getInstaller()][] = $assetConfig;
         }
 
-        $assetConfigs = [];
+        /**
+         * @var string        $agent
+         * @var AssetConfig[] $config
+         */
+        foreach ($agentConfigs as $agent => $config) {
+            $logger->info("Start installing by '".$agent."'");
 
-        foreach ($configs as $agent => $config) {
-            $output->writeln("Start installing by '".$agent."'");
-
+            /** @var InstallerInterface $agentService */
             $agentService = $this->getInstaller($agent);
 
-            try {
-                $agentService->setInputInterface($input);
-                $agentService->setOutputInterface($output);
+            $agentService->setLogger($logger);
+            $agentService->setConsoleInterface($input, $output);
 
-                $assetConfig = $agentService->install($config);
+            try {
+                $agentService->install($config);
             } catch (\Exception $ex) {
-                $output->writeln("An error occurred while '$agent' tries to install");
+                $logger->error("An error occurred while '$agent' tries to install");
 
                 throw new \RuntimeException($ex);
             }
-
-            $assetConfigs = array_merge($assetConfigs, $assetConfig);
         }
-
-        return $assetConfigs;
     }
 }

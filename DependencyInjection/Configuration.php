@@ -13,11 +13,16 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 class Configuration implements ConfigurationInterface
 {
+
+    const BUNDLE_VARIABLE = "?bundle";
+
     /**
      * {@inheritdoc}
      */
     public function getConfigTreeBuilder()
     {
+        $bundleVariable = self::BUNDLE_VARIABLE;
+
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('erfans_asset');
 
@@ -30,8 +35,12 @@ class Configuration implements ConfigurationInterface
                     ->prototype("scalar")->end()
                     ->defaultValue(["AppBundle"])
                 ->end()
+                ->scalarNode("default_output_directory")
+                    ->info("The default output directory. The default value us $bundleVariable/Resources/public; $bundleVariable will be replaced with the bundle directory.")
+                    ->defaultValue("$bundleVariable/Resources/public")
+                ->end()
                 ->arrayNode("agents")
-                    ->info("Available agents by this bundle.")
+                    ->info("Configurations to pass to each agent by their alias.")
                     ->children()
                         ->append($this->getFileConfig())
                         ->append($this->getBowerConfig())
@@ -44,6 +53,8 @@ class Configuration implements ConfigurationInterface
 
     private function getFileConfig()
     {
+        $bundleVariable = self::BUNDLE_VARIABLE;
+
         $treeBuilder = new TreeBuilder();
         $fileNode = $treeBuilder->root('file');
 
@@ -51,16 +62,14 @@ class Configuration implements ConfigurationInterface
             ->info("File agent to download defined assets by url.")
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->scalarNode("directory")
+                    ->scalarNode("default_output_directory")
                     ->cannotBeEmpty()
-                    ->info("Install directory of assets. default directory is 'web/vendor'.")
-                    ->defaultValue("web/vendor")
+                    ->info("Default directory to install assets. default directory is '$bundleVariable/Resources/public'.")
+                    ->defaultValue("$bundleVariable/Resources/public")
                 ->end()
                 ->booleanNode("create_directory")
                     ->defaultTrue()
-                    ->info(
-                       "Create a new directory for each file with name of alias in download directory."
-                    )
+                    ->info("Create a new directory for each file with name of alias in download directory.")
                 ->end()
             ->end();
 
@@ -69,6 +78,8 @@ class Configuration implements ConfigurationInterface
 
     private function getBowerConfig()
     {
+        $bundleVariable = self::BUNDLE_VARIABLE;
+
         $treeBuilder = new TreeBuilder();
         $bowerNode = $treeBuilder->root('bower');
 
@@ -80,138 +91,15 @@ class Configuration implements ConfigurationInterface
                     ->defaultValue("%kernel.root_dir%/../var/erfans_asset/bower_cache/%kernel.environment%")
                     ->info("Directory path to cache assets before installing. You need to change it if you use Symfony2.")
                 ->end()
-                ->scalarNode("directory")
+                ->scalarNode("default_output_directory")
                     ->cannotBeEmpty()
-                    ->info("Install directory of assets. default directory is 'web/bower_components'.")
-                    ->defaultValue("web/bower_components")
+                    ->info("Default directory to install assets. The default value is '$bundleVariable/Resources/public'.")
+                    ->defaultValue("$bundleVariable/Resources/public")
                     ->end()
                 ->scalarNode("github_token")
                     ->info("Github token to extend limitation of 60 repository per hour to 5000.")
                 ->end()
-                ->append($this->getBowerPackageConfig())
                 ->append($this->getBowerEnvironmentConfig())
-            ->end();
-
-        return $bowerNode;
-    }
-
-    private function getBowerPackageConfig()
-    {
-        $treeBuilder = new TreeBuilder();
-        $bowerNode = $treeBuilder->root('package');
-
-        $bowerNode
-            ->info("<https://github.com/bower/spec/blob/master/json.md>")
-            ->addDefaultsIfNotSet()
-            ->children()
-                ->scalarNode("name")
-                    ->cannotBeEmpty()
-                    ->info(
-                        "The name of the package as stored in the registry. \n".
-                        "<https://github.com/bower/spec/blob/master/json.md#name>"
-                    )
-                    ->defaultValue("application")
-                    ->end()
-                ->scalarNode("description")
-                    ->info(
-                        "Help users identify and search for your package with a brief description.".
-                        " Describe what your package does, rather than what it's made of.".
-                        " Will be displayed in search/lookup results on the CLI and the website that can be used to ".
-                        "search for packages."
-                    )
-                    ->end()
-                ->arrayNode("main")
-                    ->beforeNormalization()
-                    ->ifString()
-                    ->then(
-                        function ($v) {
-                            return [$v];
-                        }
-                    )
-                    ->end()
-                    ->prototype("scalar")->end()
-                    ->info("The entry-point files necessary to use your package. Only one file per filetype.")
-                    ->end()
-                ->arrayNode("module_type")
-                    ->beforeNormalization()
-                    ->ifString()
-                    ->then(
-                        function ($v) {
-                            return [$v];
-                        }
-                    )
-                    ->end()
-                    ->prototype("scalar")->end()
-                    ->info(
-                        "The type of module defined in the main JavaScript file. ".
-                        "Can be one or an array of the following strings: \n".
-                        "<https://github.com/bower/spec/blob/master/json.md#moduletype>"
-                    )
-                    ->end()
-                ->arrayNode("license")
-                    ->beforeNormalization()
-                    ->ifString()
-                    ->then(
-                        function ($v) {
-                            return [$v];
-                        }
-                    )
-                    ->end()
-                    ->prototype("scalar")->end()
-                    ->info("<https://github.com/bower/spec/blob/master/json.md#license>")
-                    ->end()
-                ->arrayNode("ignore")
-                    ->prototype("scalar")->end()
-                    ->info("A list of files for Bower to ignore when installing your package.")
-                    ->end()
-                    ->arrayNode("keywords")
-                    ->prototype("scalar")->end()
-                    ->info(
-                        "Same format requirements as name. Used for search by keyword. ".
-                        "Helps make your package easier to discover without people needing to know its name."
-                    )
-                    ->end()
-                ->arrayNode("authors")
-                    ->prototype("variable")->end()
-                    ->info("A list of people that authored the contents of the package.")
-                    ->end()
-                ->scalarNode("homepage")
-                    ->info(
-                        "URL to learn more about the package.".
-                        " Falls back to GitHub project if not specified and it’s a GitHub endpoint."
-                    )
-                    ->end()
-                ->variableNode("repository")
-                    ->info("The repository in which the source code can be found.")
-                    ->end()
-                ->variableNode("dependencies")
-                    ->example(array('jquery' => '2.2.4', 'bootstrap-sass' => "3.3.6"))
-                    ->info(
-                        "Dependencies are specified with a simple hash of package name to a ".
-                        " server compatible identifier or URL. \n".
-                        "<https://github.com/bower/spec/blob/master/json.md#dependencies> \n".
-                        "It is recommended to use bundle asset config file instead of global dependencies, ".
-                        "you can set more configuration in bundle asset config file"
-                    )
-                    ->end()
-                ->variableNode("dev_dependencies")
-                    ->example(array('jquery' => '2.2.4', 'bootstrap-sass' => "3.3.6"))
-                    ->info(
-                        "Dependencies that are only needed for development of the package, e.g., ".
-                        "test framework or building documentation."
-                    )
-                    ->end()
-                ->variableNode("resolutions")
-                    ->example(array("angular" => "1.3.0-beta.16"))
-                    ->info("Dependency versions to automatically resolve with if conflicts occur between packages.")
-                    ->end()
-                ->booleanNode("private")
-                    ->defaultTrue()
-                    ->info(
-                        "If set to true, Bower will refuse to publish it.".
-                        " This is a way to prevent accidental publication of private repositories."
-                    )
-                    ->end()
             ->end();
 
         return $bowerNode;
