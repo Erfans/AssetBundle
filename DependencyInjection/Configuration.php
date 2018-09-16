@@ -38,7 +38,7 @@ class Configuration implements ConfigurationInterface
                     ->defaultValue(["AppBundle"])
                 ->end()
                 ->scalarNode("default_install_directory")
-                    ->info("The default install directory. The default value us $bundleVariable/Resources/public; $bundleVariable will be replaced with the bundle directory.")
+                    ->info("The default install directory. The default value is $bundleVariable/Resources/public; $bundleVariable will be replaced with the bundle directory.")
                     ->defaultValue("$bundleVariable/Resources/public")
                 ->end()
                 ->arrayNode("agents")
