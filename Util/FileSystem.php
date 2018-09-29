@@ -39,6 +39,17 @@ class FileSystem extends BaseFileSystem {
     }
 
     /**
+     * @param string $relativePath
+     *
+     * @return string
+     */
+    public function getProjectRelativePath(string $relativePath): string {
+        $projectDir = $this->params->get('kernel.project_dir');
+
+        return $this->joinPaths($projectDir, $relativePath);
+    }
+
+    /**
      * @param string $bundleName
      * @param string $relativeFilePath
      *

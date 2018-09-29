@@ -16,9 +16,9 @@ class FileSystemTest extends KernelTestCase {
      * {@inheritDoc}
      */
     protected function setUp() {
-        $kernel = self::bootKernel();
+        self::bootKernel();
 
-        $this->fileSystem = $kernel->getContainer()->get('erfans_asset.util.path');
+        $this->fileSystem = self::$container->get('erfans_asset.util.file_system');
     }
 
     /**
@@ -36,6 +36,15 @@ class FileSystemTest extends KernelTestCase {
      */
     public function testGetBundleFile() {
         $file = $this->fileSystem->getBundleFile("ErfansAssetBundle", "README.md");
+
+        self::assertTrue(is_file($file));
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function testGetProjectRelativePath() {
+        $file = $this->fileSystem->getProjectRelativePath("public/index.php");
 
         self::assertTrue(is_file($file));
     }
